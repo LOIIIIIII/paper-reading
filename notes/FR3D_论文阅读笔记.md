@@ -48,6 +48,9 @@
 3. **已有 3D 尝试的不足**：要么只做 occupancy 预测，要么做传感器数据合成，要么（如 MILE 一类）根本不解耦 ego-motion 与 world-motion。
 4. **泛化代价问题**：通用泛化的世界模型依赖极端规模训练（如 22M GPU 小时 + 20M 小时视频），对具体下游任务不现实。
 
+![FR3D 效果总览图](../docs/images/fig1_teaser.png)
+*图 1：FR3D 总览——从单目图像序列预测未来动态 3D 重建，把自我运动（ego-camera motion）与场景结构演化的预测解耦。上行：双向交通的复杂动态场景；下行：平滑预测转弯事件。*
+
 ---
 
 ## 3. 解决了什么问题
@@ -68,6 +71,9 @@
 ---
 
 ## 4. 创新点（方法细节）
+
+![FR3D 模型框架图](../docs/images/fig2_framework.svg)
+*图 2：FR3D 方法框架——输入 N 帧上下文图像，经冻结的 CUT3R teacher（encoder + 状态-图像交叉注意力解码器）编码为状态增强 3D 场景 token；Pose Masked Transformer（位姿流）与 Spatial Masked Transformer（空间流）通过交叉注意力共享信息，自回归预测未来 token；训练时用 smooth L1 蒸馏损失对齐 teacher 在真实未来帧上的 token，推理时用 teacher 的预训练解码头还原内参/位姿/多视角一致深度。*
 
 ### 4.1 在冻结前馈 3D 重建模型的 latent 空间中学习"时间演化"
 
@@ -105,6 +111,8 @@
 
 ## 5. 实验结果
 
+<!--STAT-CARDS-->
+
 - **训练**：仅用 Waymo Open Dataset（teacher CUT3R 的训练分布内）；8×A100，AdamW，lr 1e-4，smooth L1（β=0.1）。
 - **Zero-shot 评测**（KITTI、nuScenes 均为 FR3D 与 teacher 的分布外数据）：
 
@@ -121,6 +129,12 @@
   - 位姿误差在静态/动态场景中基本一致（动态场景 2s 时还略好）；
   - 结论：模型确实把 ego 运动与世界动态分开了——但注意这是**事后验证**，不是训练时约束。
 - **论文自述局限**：横向运动物体（cross traffic）预测有偏（训练数据纵向运动偏置）；自回归 rollout 越长 scale drift 越明显。
+
+![FR3D zero-shot 定性结果](../docs/images/fig3_qualitative.png)
+*图 3：KITTI / nuScenes zero-shot 定性结果——FR3D 预测的未来 3D 重建在 2 秒时序下仍保持几何一致与物体完整性，明显优于基线的形变与漂移。*
+
+![转弯场景预测](../docs/images/fig4_turn.png)
+*图 4：nuScenes 转弯场景的 zero-shot 预测——FR3D 对转弯事件给出平滑、几何一致的未来估计。*
 
 ---
 
@@ -146,6 +160,10 @@
 
 1. **解耦缺乏显式监督与可验证保证**：解耦质量完全依赖架构归纳偏置，论文只能做事后 proxy 分析（静止相机子集的深度漂移、static/dynamic 分区对比、跨场景位姿鲁棒性）。没有训练时约束能保证 F/G 真正分离，也无法量化"泄漏"程度。
 2. **横向运动失败恰好暴露动力学不纯**：模型把横向运动物体（cross traffic）估计成"横向 + 纵向"的混合，说明世界动力学部分并未学到干净的 F——单源数据 + 隐式解耦下，数据偏置直接渗入动力学。这正是"需要更强约束/更多对照信号"的证据，支持我们的多车一致性思路。
+
+   ![FR3D 失败案例](../docs/images/fig5_failure.png)
+   *图 5：Waymo 两个场景的失败案例——模型将横向运动物体估计为纵向+横向的混合运动，动力学预测出现系统性偏差。*
+
 3. **自回归 rollout 的 scale drift**：每步 rollout 漂移累积（论文附录 C 自述），长时预测几何退化；论文寄希望于"additional geometric constraints"，但一期未解决。
 4. **确定性单模态预测**：smooth L1 回归只学"最可能的未来"，无法表达动态物体未来的多模态分布（Preliminaries 里的 latent 变量 u_t 实际未用于分布建模），对下游规划而言过于乐观。
 5. **无动作条件输入**：ego-motion 是"推断出的最可能轨迹"，作为 action 的 latent proxy，而非由规划动作条件化。因此无法做 what-if 闭环推演（"如果我左转会怎样"），削弱了世界模型对闭环规划的价值。

@@ -58,6 +58,26 @@
   }
   pre code { display: block; padding: 14px; overflow-x: auto; }
   hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+  figure {
+    margin: 26px auto; text-align: center; max-width: 92%;
+    background: #fbfcfd; border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 14px;
+  }
+  figure img {
+    display: block; margin: 0 auto; max-width: 100%; height: auto; border-radius: 8px;
+  }
+  figcaption {
+    font-size: 13.5px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.75;
+  }
+  .stats {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: stretch; margin: 26px 0 8px;
+  }
+  .stat {
+    flex: 1 1 210px; max-width: 260px; text-align: center; padding: 20px 14px 16px;
+    background: linear-gradient(180deg, #f2faf7 0%, #ffffff 100%);
+    border: 1px solid #d3e8e1; border-radius: 14px;
+  }
+  .stat-num { font-size: 30px; font-weight: 800; color: var(--accent); letter-spacing: .5px; }
+  .stat-label { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.65; }
   .back-top { text-align: center; margin-top: 40px; }
   .back-top a {
     display: inline-block; padding: 8px 22px; border-radius: 999px; text-decoration: none;
@@ -149,6 +169,7 @@
 <li><strong>已有 3D 尝试的不足</strong>：要么只做 occupancy 预测，要么做传感器数据合成，要么（如 MILE 一类）根本不解耦 ego-motion 与 world-motion。</li>
 <li><strong>泛化代价问题</strong>：通用泛化的世界模型依赖极端规模训练（如 22M GPU 小时 + 20M 小时视频），对具体下游任务不现实。</li>
 </ol>
+<figure><img alt="FR3D 效果总览图" src="images/fig1_teaser.png"><figcaption>图 1：FR3D 总览——从单目图像序列预测未来动态 3D 重建，把自我运动（ego-camera motion）与场景结构演化的预测解耦。上行：双向交通的复杂动态场景；下行：平滑预测转弯事件。</figcaption></figure>
 <hr />
 <h2 id="3-解决了什么问题">3. 解决了什么问题</h2>
 <table>
@@ -186,6 +207,7 @@
 </ol>
 <hr />
 <h2 id="4-创新点-方法细节">4. 创新点（方法细节）</h2>
+<figure><img alt="FR3D 模型框架图" src="images/fig2_framework.svg"><figcaption>图 2：FR3D 方法框架——输入 N 帧上下文图像，经冻结的 CUT3R teacher（encoder + 状态-图像交叉注意力解码器）编码为状态增强 3D 场景 token；Pose Masked Transformer（位姿流）与 Spatial Masked Transformer（空间流）通过交叉注意力共享信息，自回归预测未来 token；训练时用 smooth L1 蒸馏损失对齐 teacher 在真实未来帧上的 token，推理时用 teacher 的预训练解码头还原内参/位姿/多视角一致深度。</figcaption></figure>
 <h3 id="4-1-在冻结前馈-3d-重建模型的-latent-空间中学习-时间演化">4.1 在冻结前馈 3D 重建模型的 latent 空间中学习"时间演化"</h3>
 <ul>
 <li>Teacher：<strong>CUT3R</strong>（在 32 个数据集上预训练约 1 个月的前馈 3D 重建基础模型），提供 encoder（图像 → token）、双 transformer decoder（图像 token 与 768 维状态 s 通过交叉注意力互相更新）、以及内参/位姿/多视角一致深度的预训练解码头。</li>
@@ -220,6 +242,14 @@
 </ol>
 <hr />
 <h2 id="5-实验结果">5. 实验结果</h2>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num">0.178</div><div class="stat-label">KITTI 深度 AbsR ↓<br>t+2.0s · zero-shot 最优</div></div>
+  <div class="stat"><div class="stat-num">0.229</div><div class="stat-label">nuScenes 深度 AbsR ↓<br>t+2.5s · zero-shot 最优</div></div>
+  <div class="stat"><div class="stat-num">0.403</div><div class="stat-label">KITTI 位姿 ATE ↓<br>t+2.0s（基线 0.626）</div></div>
+  <div class="stat"><div class="stat-num">≤1.64%</div><div class="stat-label">静态区域深度漂移 @1s<br>解耦有效性的直接证据</div></div>
+</div>
+
 <ul>
 <li><strong>训练</strong>：仅用 Waymo Open Dataset（teacher CUT3R 的训练分布内）；8×A100，AdamW，lr 1e-4，smooth L1（β=0.1）。</li>
 <li><strong>Zero-shot 评测</strong>（KITTI、nuScenes 均为 FR3D 与 teacher 的分布外数据）：</li>
@@ -267,6 +297,8 @@
 <li>结论：模型确实把 ego 运动与世界动态分开了——但注意这是<strong>事后验证</strong>，不是训练时约束。</li>
 <li><strong>论文自述局限</strong>：横向运动物体（cross traffic）预测有偏（训练数据纵向运动偏置）；自回归 rollout 越长 scale drift 越明显。</li>
 </ul>
+<figure><img alt="FR3D zero-shot 定性结果" src="images/fig3_qualitative.png"><figcaption>图 3：KITTI / nuScenes zero-shot 定性结果——FR3D 预测的未来 3D 重建在 2 秒时序下仍保持几何一致与物体完整性，明显优于基线的形变与漂移。</figcaption></figure>
+<figure><img alt="转弯场景预测" src="images/fig4_turn.png"><figcaption>图 4：nuScenes 转弯场景的 zero-shot 预测——FR3D 对转弯事件给出平滑、几何一致的未来估计。</figcaption></figure>
 <hr />
 <h2 id="6-与我们方法的对比">6. 与我们方法的对比</h2>
 <blockquote>
@@ -324,6 +356,9 @@
 <ol>
 <li><strong>解耦缺乏显式监督与可验证保证</strong>：解耦质量完全依赖架构归纳偏置，论文只能做事后 proxy 分析（静止相机子集的深度漂移、static/dynamic 分区对比、跨场景位姿鲁棒性）。没有训练时约束能保证 F/G 真正分离，也无法量化"泄漏"程度。</li>
 <li><strong>横向运动失败恰好暴露动力学不纯</strong>：模型把横向运动物体（cross traffic）估计成"横向 + 纵向"的混合，说明世界动力学部分并未学到干净的 F——单源数据 + 隐式解耦下，数据偏置直接渗入动力学。这正是"需要更强约束/更多对照信号"的证据，支持我们的多车一致性思路。</li>
+</ol>
+<figure><img alt="FR3D 失败案例" src="images/fig5_failure.png"><figcaption>图 5：Waymo 两个场景的失败案例——模型将横向运动物体估计为纵向+横向的混合运动，动力学预测出现系统性偏差。</figcaption></figure>
+<ol start="3">
 <li><strong>自回归 rollout 的 scale drift</strong>：每步 rollout 漂移累积（论文附录 C 自述），长时预测几何退化；论文寄希望于"additional geometric constraints"，但一期未解决。</li>
 <li><strong>确定性单模态预测</strong>：smooth L1 回归只学"最可能的未来"，无法表达动态物体未来的多模态分布（Preliminaries 里的 latent 变量 u_t 实际未用于分布建模），对下游规划而言过于乐观。</li>
 <li><strong>无动作条件输入</strong>：ego-motion 是"推断出的最可能轨迹"，作为 action 的 latent proxy，而非由规划动作条件化。因此无法做 what-if 闭环推演（"如果我左转会怎样"），削弱了世界模型对闭环规划的价值。</li>
@@ -350,6 +385,6 @@
 <div class="back-top"><a href="#">↑ 回到顶部</a></div>
 </main>
 </div>
-<footer>FR3D Paper Reading Notes · 更新于 2026-09-14 · 由 LiMin xue 整理</footer>
+<footer>FR3D Paper Reading Notes · 更新于 2026-09-15 · 由 LiMin xue 整理</footer>
 </body>
 </html>
