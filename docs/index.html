@@ -1,390 +1,48 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FR3D 论文阅读笔记 · 自动驾驶世界模型中的解耦</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Paper Reading · 世界模型研究笔记</title>
 <style>
-  :root {
-    --accent: #1a6d5b; --accent-light: #e6f2ef; --text: #2b2f33;
-    --muted: #6b7280; --border: #e5e7eb; --bg: #f7f8f9; --card: #ffffff;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
-      "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
-    line-height: 1.85; font-size: 16px;
-  }
-  header {
-    background: linear-gradient(135deg, #0f3d33 0%, #1a6d5b 60%, #2a9d8f 100%);
-    color: #fff; padding: 44px 20px 36px; text-align: center;
-  }
-  header h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: 1px; }
-  header p { margin: 4px 0; opacity: .92; font-size: 15px; }
-  header a { color: #ffe9a8; text-decoration: none; border-bottom: 1px dashed rgba(255,233,168,.6); }
-  .wrap { display: flex; max-width: 1180px; margin: 28px auto; gap: 24px; padding: 0 16px; align-items: flex-start; }
-  nav.toc {
-    flex: 0 0 268px; position: sticky; top: 20px; background: var(--card);
-    border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; max-height: calc(100vh - 60px); overflow-y: auto;
-  }
-  .toc-title { font-weight: 700; margin-bottom: 10px; color: var(--accent); }
-  nav.toc ul { list-style: none; margin: 0; padding: 0; }
-  nav.toc li { margin: 4px 0; }
-  nav.toc li.lv3 { padding-left: 16px; }
-  nav.toc a { color: var(--text); text-decoration: none; font-size: 13.5px; display: block; border-radius: 6px; padding: 3px 8px; }
-  nav.toc a:hover { background: var(--accent-light); color: var(--accent); }
-  main {
-    flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 40px 48px 56px;
-  }
-  h2 {
-    color: var(--accent); font-size: 22px; margin-top: 2.2em; padding-bottom: 8px;
-    border-bottom: 2px solid var(--accent-light);
-  }
-  h3 { font-size: 18px; margin-top: 1.8em; }
-  blockquote {
-    margin: 1.2em 0; padding: 14px 20px; background: var(--accent-light);
-    border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; color: #14524a;
-  }
-  blockquote p { margin: 6px 0; }
-  table { border-collapse: collapse; width: 100%; margin: 1.2em 0; font-size: 14.5px; }
-  th { background: var(--accent-light); color: #14524a; }
-  th, td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
-  tr:nth-child(even) td { background: #fafbfc; }
-  code {
-    background: #eef1f3; border-radius: 4px; padding: 2px 6px;
-    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: .9em;
-  }
-  pre code { display: block; padding: 14px; overflow-x: auto; }
-  hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
-  figure {
-    margin: 26px auto; text-align: center; max-width: 92%;
-    background: #fbfcfd; border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 14px;
-  }
-  figure img {
-    display: block; margin: 0 auto; max-width: 100%; height: auto; border-radius: 8px;
-  }
-  figcaption {
-    font-size: 13.5px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.75;
-  }
-  .stats {
-    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: stretch; margin: 26px 0 8px;
-  }
-  .stat {
-    flex: 1 1 210px; max-width: 260px; text-align: center; padding: 20px 14px 16px;
-    background: linear-gradient(180deg, #f2faf7 0%, #ffffff 100%);
-    border: 1px solid #d3e8e1; border-radius: 14px;
-  }
-  .stat-num { font-size: 30px; font-weight: 800; color: var(--accent); letter-spacing: .5px; }
-  .stat-label { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.65; }
-  .back-top { text-align: center; margin-top: 40px; }
-  .back-top a {
-    display: inline-block; padding: 8px 22px; border-radius: 999px; text-decoration: none;
-    background: var(--accent); color: #fff; font-size: 14px;
-  }
-  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 26px 0 40px; }
-  @media (max-width: 900px) {
-    .wrap { flex-direction: column; }
-    nav.toc { position: static; max-height: none; flex: none; width: 100%; }
-    main { padding: 24px 20px 40px; }
-  }
-</style>
-</head>
+:root{--t:#24272f;--m:#6b7280;--b:#e5e7eb;--bg:#f6f7fb;--card:#fff;--g:#1a6d5b;--p:#4f46e5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.8}
+header{padding:64px 20px 54px;text-align:center;color:white;background:linear-gradient(135deg,#172554,#334155 46%,#4f46e5)}
+header h1{font-size:36px;margin:0 0 12px}header p{margin:5px 0;opacity:.9}
+.wrap{max-width:1060px;margin:38px auto;padding:0 18px}.lead{background:#fff;border:1px solid var(--b);border-radius:16px;padding:24px 28px;color:#4b5563}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:24px}.card{background:var(--card);border:1px solid var(--b);border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(20,30,60,.04)}
+.card h2{margin:10px 0 8px;font-size:24px}.card p{color:var(--m)}.tag{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.green{background:#e6f2ef;color:var(--g)}.purple{background:#eef2ff;color:var(--p)}
+.card a{display:inline-block;margin-top:12px;text-decoration:none;color:#fff;padding:9px 16px;border-radius:9px;font-weight:700}
+.green-btn{background:var(--g)}.purple-btn{background:var(--p)}
+.meta{font-size:13px;color:var(--m);margin-top:18px}footer{text-align:center;color:var(--m);font-size:13px;padding:28px 0 42px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}header h1{font-size:30px}}
+</style></head>
 <body>
 <header>
-  <h1>FR3D 论文阅读笔记</h1>
-  <p>Future Dynamic 3D Reconstruction: A 3D World Model with Disentangled Ego-Motion</p>
-  <p>主题：自动驾驶世界模型中的「解耦」— Ego-Motion 与 World-Motion 的分离</p>
-  <p>📖 论文原文：<a href="https://arxiv.org/html/2606.18250v1" target="_blank">arXiv:2606.18250</a> ｜ 📁 <a href="https://github.com/LOIIIIIII/paper-reading" target="_blank">GitHub 仓库</a></p>
+<h1>Paper Reading · 世界模型研究笔记</h1>
+<p>按研究问题组织论文，而不是把所有文章混在一个页面里。</p>
+<p>World Models · State · Dynamics · Partial Observability</p>
 </header>
 <div class="wrap">
-<nav class="toc"><div class="toc-title">📑 目录</div><ul><li class="lv2"><a href="#0-论文基本信息">0. 论文基本信息</a></li><li class="lv2"><a href="#1-任务定义-这是什么任务">1. 任务定义：这是什么任务？</a></li><li class="lv3"><a href="#1-1-任务命名">1.1 任务命名</a></li><li class="lv3"><a href="#1-2-在-解耦-视角下的任务定义-本文归纳">1.2 在&quot;解耦&quot;视角下的任务定义（本文归纳）</a></li><li class="lv2"><a href="#2-任务背景与动机">2. 任务背景与动机</a></li><li class="lv2"><a href="#3-解决了什么问题">3. 解决了什么问题</a></li><li class="lv2"><a href="#4-创新点-方法细节">4. 创新点（方法细节）</a></li><li class="lv3"><a href="#4-1-在冻结前馈-3d-重建模型的-latent-空间中学习-时间演化">4.1 在冻结前馈 3D 重建模型的 latent 空间中学习&quot;时间演化&quot;</a></li><li class="lv3"><a href="#4-2-双-masked-transformer-实现-ego-motion-world-motion-解耦-核心创新">4.2 双 Masked Transformer 实现 ego-motion / world-motion 解耦（核心创新）</a></li><li class="lv3"><a href="#4-3-teacher-student-蒸馏训练">4.3 Teacher-Student 蒸馏训练</a></li><li class="lv3"><a href="#4-4-自回归滑窗训练">4.4 自回归滑窗训练</a></li><li class="lv3"><a href="#4-5-推理流程">4.5 推理流程</a></li><li class="lv2"><a href="#5-实验结果">5. 实验结果</a></li><li class="lv2"><a href="#6-与我们方法的对比">6. 与我们方法的对比</a></li><li class="lv2"><a href="#7-fr3d-的不足之处">7. FR3D 的不足之处</a></li><li class="lv2"><a href="#8-可借鉴点与启发">8. 可借鉴点与启发</a></li><li class="lv2"><a href="#9-参考链接">9. 参考链接</a></li></ul></nav>
-<main>
-<h1>FR3D 论文阅读笔记</h1>
-<blockquote>
-<p><strong>主题定位：自动驾驶世界模型中的"解耦"问题 —— 自我运动（Ego-Motion）与世界运动（World-Motion）的分离</strong></p>
-<p>阅读日期：2026-09-14 ｜ 阅读人：LiMin xue ｜ 组会讨论用笔记</p>
-</blockquote>
-<hr />
-<h2 id="0-论文基本信息">0. 论文基本信息</h2>
-<table>
-<thead>
-<tr>
-<th>项目</th>
-<th>内容</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>标题</td>
-<td><strong>Future Dynamic 3D Reconstruction: A 3D World Model with Disentangled Ego-Motion</strong></td>
-</tr>
-<tr>
-<td>简称</td>
-<td><strong>FR3D</strong> = <strong>F</strong>uture dynamic 3D <strong>R</strong>econstruction</td>
-</tr>
-<tr>
-<td>作者</td>
-<td>Nils Morbitzer<em>, Jonathan Evers</em>, Artem Savkin, Thomas Stauner, Nassir Navab, Federico Tombari, Stefano Gasperini（*共同一作）</td>
-</tr>
-<tr>
-<td>机构</td>
-<td>慕尼黑工业大学（TUM）· MCML · BMW Group</td>
-</tr>
-<tr>
-<td>出处</td>
-<td>arXiv:2606.18250v1 [cs.CV]，2026-06-16</td>
-</tr>
-<tr>
-<td>项目主页</td>
-<td>https://fr3d-wm.github.io</td>
-</tr>
-<tr>
-<td>一句话总结</td>
-<td>提出第一个在<strong>统一的 3D latent 空间</strong>中、把<strong>相机自我运动</strong>与<strong>场景世界运动</strong>解耦后进行自回归未来预测的 3D 世界模型，从单目图像序列预测未来 2 秒的动态 3D 重建。</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-任务定义-这是什么任务">1. 任务定义：这是什么任务？</h2>
-<h3 id="1-1-任务命名">1.1 任务命名</h3>
-<p>论文定义了一个新任务：<strong>Future Dynamic 3D Reconstruction（未来动态 3D 重建）</strong>。</p>
-<ul>
-<li>传统 3D 重建是<strong>回溯性</strong>的：对已经看到的（过去的）图像做几何重建；</li>
-<li>FR3D 是<strong>前瞻性</strong>的：给定过去 N 帧单目图像，<strong>预测未来时刻的完整 3D 场景重建</strong>（场景结构 + 相机位姿），而不是生成未来 2D 图像。</li>
-</ul>
-<h3 id="1-2-在-解耦-视角下的任务定义-本文归纳">1.2 在"解耦"视角下的任务定义（本文归纳）</h3>
-<p>从我们课题（解耦）的角度，可以把 FR3D 所做的事抽象为：</p>
-<blockquote>
-<p><strong>观测变化 = 自我运动诱导的视角/投影变化（G）+ 场景真实 3D 演化（F）</strong></p>
-<p>FR3D 的任务范式 = 在 3D 世界模型中，把 G（ego-camera motion）与 F（world-motion / scene dynamics）<strong>分解到两条 latent 轨迹上分别预测</strong>，再组合成几何一致的未来 3D 重建。</p>
-</blockquote>
-<p>形式化对应：输入单目图像序列 I ∈ R^(N×3×H×W)，用冻结的前馈 3D 重建模型（CUT3R）编码为"状态增强 3D 场景 token"（位姿 token z 与空间 token F 两类），随后由两个 Masked Transformer 分别自回归预测未来的位姿 token z_{t_{N+1}} 与空间 token F_{t_{N+1}}，最后用预训练解码头还原出未来的内参、相机位姿与多视角一致深度。</p>
-<hr />
-<h2 id="2-任务背景与动机">2. 任务背景与动机</h2>
-<ol>
-<li><strong>世界模型的共识</strong>：世界模型的核心能力是"给定历史观测与（潜在）动作，准确估计未来状态"。存在两条路线：Ha &amp; Schmidhuber 的生成式（在传感器空间直接合成未来）与 LeCun 的抽象 latent 预测（像素级照片真实感不重要，任务相关的抽象表征才重要）。</li>
-<li><strong>2D 生成式世界模型的问题</strong>：Sora/Veo/Genie 一类视频扩散模型照片真实感极强，但它们<strong>在图像平面内工作，把相机轨迹与场景演化搅在一起</strong>。长时 rollout 会产生"幻觉物理"：物体 morphing、凭空消失、深度相关的运动视差不一致、3D 几何结构崩溃。论文的立场：<strong>对要在物理世界执行任务的智能体，几何完整性必须优先于照片真实感</strong>。</li>
-<li><strong>已有 3D 尝试的不足</strong>：要么只做 occupancy 预测，要么做传感器数据合成，要么（如 MILE 一类）根本不解耦 ego-motion 与 world-motion。</li>
-<li><strong>泛化代价问题</strong>：通用泛化的世界模型依赖极端规模训练（如 22M GPU 小时 + 20M 小时视频），对具体下游任务不现实。</li>
-</ol>
-<figure><img alt="FR3D 效果总览图" src="images/fig1_teaser.png"><figcaption>图 1：FR3D 总览——从单目图像序列预测未来动态 3D 重建，把自我运动（ego-camera motion）与场景结构演化的预测解耦。上行：双向交通的复杂动态场景；下行：平滑预测转弯事件。</figcaption></figure>
-<hr />
-<h2 id="3-解决了什么问题">3. 解决了什么问题</h2>
-<table>
-<thead>
-<tr>
-<th>#</th>
-<th>问题</th>
-<th>FR3D 的解法</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>自我运动与世界运动的歧义：观测变化中哪些是"我在动"、哪些是"世界在动"</td>
-<td>在统一 3D latent 空间中显式分出<strong>位姿 token 流</strong>与<strong>空间 token 流</strong>，分别预测、交叉互约束，保证长时（2s）几何一致性</td>
-</tr>
-<tr>
-<td>2</td>
-<td>世界模型只有 2D/图像特征、缺乏持久 3D 表征</td>
-<td>维护<strong>持久统一的 3D latent 表征</strong>（状态增强 token）向前传播，而不是一串孤立的 2D 帧</td>
-</tr>
-<tr>
-<td>3</td>
-<td>泛化依赖超大规模训练</td>
-<td><strong>teacher-student 蒸馏</strong>：只学"如何在冻结 3D 基础模型（CUT3R）的 latent 空间中做时间演化"，几何先验全部继承，用少量数据（仅 Waymo）获得 zero-shot 泛化</td>
-</tr>
-</tbody>
-</table>
-<p>四条官方贡献：</p>
-<ol>
-<li>提出新任务 <strong>future dynamic 3D reconstruction from monocular observations</strong>，为 3D 世界模型给出新范式；</li>
-<li>第一个在统一 3D latent 空间中同时传播场景状态与智能体位姿的动态 3D 重建世界模型；</li>
-<li>证明解耦 ego-motion 与环境动力学能带来显著更稳定的长时预测（2 秒）；</li>
-<li>提出高效训练策略：从基础模型蒸馏几何先验，实现强 zero-shot 性能。</li>
-</ol>
-<hr />
-<h2 id="4-创新点-方法细节">4. 创新点（方法细节）</h2>
-<figure><img alt="FR3D 模型框架图" src="images/fig2_framework.svg"><figcaption>图 2：FR3D 方法框架——输入 N 帧上下文图像，经冻结的 CUT3R teacher（encoder + 状态-图像交叉注意力解码器）编码为状态增强 3D 场景 token；Pose Masked Transformer（位姿流）与 Spatial Masked Transformer（空间流）通过交叉注意力共享信息，自回归预测未来 token；训练时用 smooth L1 蒸馏损失对齐 teacher 在真实未来帧上的 token，推理时用 teacher 的预训练解码头还原内参/位姿/多视角一致深度。</figcaption></figure>
-<h3 id="4-1-在冻结前馈-3d-重建模型的-latent-空间中学习-时间演化">4.1 在冻结前馈 3D 重建模型的 latent 空间中学习"时间演化"</h3>
-<ul>
-<li>Teacher：<strong>CUT3R</strong>（在 32 个数据集上预训练约 1 个月的前馈 3D 重建基础模型），提供 encoder（图像 → token）、双 transformer decoder（图像 token 与 768 维状态 s 通过交叉注意力互相更新）、以及内参/位姿/多视角一致深度的预训练解码头。</li>
-<li>Student（FR3D）：<strong>只学一件事——预测未来时刻的状态增强 token</strong>。几何先验全部继承自 teacher，student 专注于动力学。</li>
-</ul>
-<h3 id="4-2-双-masked-transformer-实现-ego-motion-world-motion-解耦-核心创新">4.2 双 Masked Transformer 实现 ego-motion / world-motion 解耦（核心创新）</h3>
-<ul>
-<li><strong>Pose Masked Transformer（M_z）</strong>：4 层、4 头、隐藏维 1152，只负责预测下一个<strong>位姿 token</strong>（自我运动轨迹）；</li>
-<li><strong>Spatial Masked Transformer（M_F）</strong>：12 层、8 头、隐藏维 1152，作用在 21×32×3328 的空间网格特征上，只负责预测下一个<strong>空间 token</strong>（场景结构演化）；</li>
-<li>两流之间插入 <strong>4 层交叉注意力</strong>共享信息，隐式耦合位姿与深度预测：</li>
-<li>位姿外推决定了静态结构在 t → t+1 如何投影变化 → 让深度预测变简单；</li>
-<li>下一帧的深度反过来约束相机"只能站在哪"。</li>
-<li>消融证明：这种互约束同时提升两个任务（A5 相比 A3，位姿 ATE@1s 从 0.489 → 0.223）。</li>
-</ul>
-<h3 id="4-3-teacher-student-蒸馏训练">4.3 Teacher-Student 蒸馏训练</h3>
-<ul>
-<li>把未来预测建模为<strong>连续回归</strong>而非生成：student 预测的未来 token 用 smooth L1 直接回归 teacher 在真实未来帧上算出的 token；</li>
-<li>总损失：L = L_spatial + 10 · L_pose（λ=10 为固定超参）；</li>
-<li>不需要像素级监督，也不需要扩散模型。</li>
-</ul>
-<h3 id="4-4-自回归滑窗训练">4.4 自回归滑窗训练</h3>
-<ul>
-<li>上下文固定 4 帧，训练 rollout 上限 5 步；</li>
-<li>用滑动窗口<strong>逐渐提高 student 自己预测的 token 在上下文中的占比</strong>，让模型习惯"吃自己带噪的预测"→ 对齐训练与测试分布，抑制长时 rollout 漂移。</li>
-</ul>
-<h3 id="4-5-推理流程">4.5 推理流程</h3>
-<ol>
-<li>编码 N 帧上下文 → 提取状态增强 3D 场景 token；</li>
-<li>位姿 token 与空间 token 分别送入两个 Masked Transformer 预测下一时刻 token（token 已隐含状态，无需再更新 CUT3R 状态）；</li>
-<li>自回归 rollout；</li>
-<li>用 CUT3R 预训练解码头直接解码 → 未来时刻的内参、位姿、多视角一致深度 → <strong>未来 3D 重建</strong>。</li>
-</ol>
-<hr />
-<h2 id="5-实验结果">5. 实验结果</h2>
-
-<div class="stats">
-  <div class="stat"><div class="stat-num">0.178</div><div class="stat-label">KITTI 深度 AbsR ↓<br>t+2.0s · zero-shot 最优</div></div>
-  <div class="stat"><div class="stat-num">0.229</div><div class="stat-label">nuScenes 深度 AbsR ↓<br>t+2.5s · zero-shot 最优</div></div>
-  <div class="stat"><div class="stat-num">0.403</div><div class="stat-label">KITTI 位姿 ATE ↓<br>t+2.0s（基线 0.626）</div></div>
-  <div class="stat"><div class="stat-num">≤1.64%</div><div class="stat-label">静态区域深度漂移 @1s<br>解耦有效性的直接证据</div></div>
+<div class="lead">
+目前将论文拆为两个研究方向：一个关注<strong>自动驾驶世界模型中的解耦</strong>，另一个关注<strong>不可观测状态追踪</strong>。后续同方向论文继续挂到各自目录下，便于组会横向比较。
 </div>
-
-<ul>
-<li><strong>训练</strong>：仅用 Waymo Open Dataset（teacher CUT3R 的训练分布内）；8×A100，AdamW，lr 1e-4，smooth L1（β=0.1）。</li>
-<li><strong>Zero-shot 评测</strong>（KITTI、nuScenes 均为 FR3D 与 teacher 的分布外数据）：</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>指标（t+2.0s / t+2.5s）</th>
-<th>CUT3R (Oracle，可偷看未来帧)</th>
-<th>Copy Last</th>
-<th>DINO-Foresight</th>
-<th><strong>FR3D</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>KITTI 深度 AbsR ↓</td>
-<td>0.086</td>
-<td>0.190</td>
-<td>0.197</td>
-<td><strong>0.178</strong></td>
-</tr>
-<tr>
-<td>nuScenes 深度 AbsR ↓</td>
-<td>0.163</td>
-<td>0.242</td>
-<td>0.283</td>
-<td><strong>0.229</strong></td>
-</tr>
-<tr>
-<td>KITTI 位姿 ATE ↓</td>
-<td>0.119</td>
-<td>—</td>
-<td>—</td>
-<td><strong>0.403</strong>（基线 +M_z 为 0.626）</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><strong>消融</strong>（A2→A6）：在 CUT3R-Foresight 基础上依次加 pose 模型（A3）、自回归训练（A4）、信息共享（A5）逐级涨点；信息共享对位姿提升最明显。</li>
-<li><strong>解耦专项分析</strong>（4.2.4 节，与我们课题最相关）：</li>
-<li>在 Waymo 中筛出<strong>无 ego 运动的场景子集</strong>，测静态/动态区域的相对深度变化（mean absolute log-ratio）：</li>
-<li>静态区域经逐帧 scale 对齐后仅 <strong>0.40%~1.64%</strong>，动态区域 <strong>7.64%~12.97%</strong>（1s 处 12.97% vs 静态 1.64%）；</li>
-<li>位姿误差在静态/动态场景中基本一致（动态场景 2s 时还略好）；</li>
-<li>结论：模型确实把 ego 运动与世界动态分开了——但注意这是<strong>事后验证</strong>，不是训练时约束。</li>
-<li><strong>论文自述局限</strong>：横向运动物体（cross traffic）预测有偏（训练数据纵向运动偏置）；自回归 rollout 越长 scale drift 越明显。</li>
-</ul>
-<figure><img alt="FR3D zero-shot 定性结果" src="images/fig3_qualitative.png"><figcaption>图 3：KITTI / nuScenes zero-shot 定性结果——FR3D 预测的未来 3D 重建在 2 秒时序下仍保持几何一致与物体完整性，明显优于基线的形变与漂移。</figcaption></figure>
-<figure><img alt="转弯场景预测" src="images/fig4_turn.png"><figcaption>图 4：nuScenes 转弯场景的 zero-shot 预测——FR3D 对转弯事件给出平滑、几何一致的未来估计。</figcaption></figure>
-<hr />
-<h2 id="6-与我们方法的对比">6. 与我们方法的对比</h2>
-<blockquote>
-<p>我们的方法（师兄提出）：<strong>基于同步多车的动态解耦</strong>——利用同步多车数据作为"天然对照实验"，同一个世界状态 F 被多个不同观测条件 G_i 的观察者同时观测；要求真实世界变化（物体 x_t → x_{t+1}）对所有观察者在统一空间中对应<strong>同一个 F</strong>，只随观察者 i 变化的 transition 归为 G_i，从而把 observer 特有干扰从共享 dynamics 中结构化地排出。</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>维度</th>
-<th>FR3D</th>
-<th>我们（同步多车动态解耦）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>解耦对象</td>
-<td>ego-motion vs world-motion（运动层面）</td>
-<td>场景动力学 F vs 观测过程 G（动力学/因果层面）</td>
-</tr>
-<tr>
-<td>解耦机制</td>
-<td><strong>隐式</strong>：pose/spatial 双 token流 + 交叉注意力互约束，靠架构归纳偏置</td>
-<td><strong>显式</strong>：跨车一致性约束，同一 F、不同 G_i 的天然对照</td>
-</tr>
-<tr>
-<td>监督信号</td>
-<td>teacher 未来帧 token 的 smooth L1 回归（单目单车）</td>
-<td>多车一致性损失（解耦本身即训练目标）</td>
-</tr>
-<tr>
-<td>解耦保证</td>
-<td>无训练时保证，只有事后 proxy 分析（静止相机子集、static/dynamic 分区）</td>
-<td>训练时直接约束，理论上可证（同一世界变化的跨观察者不变性）</td>
-</tr>
-<tr>
-<td>数据需求</td>
-<td>单目视频（Waymo 训练）</td>
-<td>需要同步多车/协同感知数据</td>
-</tr>
-<tr>
-<td>表征目标</td>
-<td>几何一致的未来 3D 重建输出</td>
-<td>符合物理规律的世界状态演化 S_t → S_{t+1}</td>
-</tr>
-<tr>
-<td>未来建模</td>
-<td>确定性回归（单模态）</td>
-<td>可在此基础上引入多模态/分布建模（未定）</td>
-</tr>
-</tbody>
-</table>
-<p><strong>核心观察</strong>：FR3D 与我们在处理同一个根本纠缠（Observation = World + Observation Process），但它把解耦寄托于<strong>架构先验</strong>，而我们的思路把解耦建立在<strong>数据对照（物理不变性）</strong>上——这是两条正交且可互补的路线。</p>
-<hr />
-<h2 id="7-fr3d-的不足之处">7. FR3D 的不足之处</h2>
-<ol>
-<li><strong>解耦缺乏显式监督与可验证保证</strong>：解耦质量完全依赖架构归纳偏置，论文只能做事后 proxy 分析（静止相机子集的深度漂移、static/dynamic 分区对比、跨场景位姿鲁棒性）。没有训练时约束能保证 F/G 真正分离，也无法量化"泄漏"程度。</li>
-<li><strong>横向运动失败恰好暴露动力学不纯</strong>：模型把横向运动物体（cross traffic）估计成"横向 + 纵向"的混合，说明世界动力学部分并未学到干净的 F——单源数据 + 隐式解耦下，数据偏置直接渗入动力学。这正是"需要更强约束/更多对照信号"的证据，支持我们的多车一致性思路。</li>
-</ol>
-<figure><img alt="FR3D 失败案例" src="images/fig5_failure.png"><figcaption>图 5：Waymo 两个场景的失败案例——模型将横向运动物体估计为纵向+横向的混合运动，动力学预测出现系统性偏差。</figcaption></figure>
-<ol start="3">
-<li><strong>自回归 rollout 的 scale drift</strong>：每步 rollout 漂移累积（论文附录 C 自述），长时预测几何退化；论文寄希望于"additional geometric constraints"，但一期未解决。</li>
-<li><strong>确定性单模态预测</strong>：smooth L1 回归只学"最可能的未来"，无法表达动态物体未来的多模态分布（Preliminaries 里的 latent 变量 u_t 实际未用于分布建模），对下游规划而言过于乐观。</li>
-<li><strong>无动作条件输入</strong>：ego-motion 是"推断出的最可能轨迹"，作为 action 的 latent proxy，而非由规划动作条件化。因此无法做 what-if 闭环推演（"如果我左转会怎样"），削弱了世界模型对闭环规划的价值。</li>
-<li><strong>强依赖单一 frozen teacher（CUT3R）</strong>：继承 teacher 的域覆盖与偏差；zero-shot 性能仍显著低于 oracle（t+2.0s KITTI AbsR 0.178 vs 0.086），且 student 只在 Waymo 上训练。</li>
-<li><strong>评测以重建为中心</strong>：深度/位姿指标衡量的是几何一致性，缺少任务级评测（occupancy forecast、规划指标）来回答"动力学是否真的学对了"。</li>
-</ol>
-<hr />
-<h2 id="8-可借鉴点与启发">8. 可借鉴点与启发</h2>
-<ol>
-<li><strong>Teacher-student 蒸馏范式</strong>：冻结强先验基础模型、只学时间演化 → 极大降低数据/算力需求，可直接迁移到我们的多车一致性模型（teacher 可为多车统一坐标系下的 BEV/3D 表征模型）。</li>
-<li><strong>自回归滑窗训练</strong>：逐步提高"自预测 token"占比，对齐训练/测试分布、抑制漂移——任何自回归世界模型都用得上。</li>
-<li><strong>双流互约束思想</strong>：pose 流与 spatial 流交叉注意力互约束可作为一个<strong>架构 baseline</strong>，与我们的多车一致性损失做消融对照（隐式解耦 vs 显式解耦的增益量化）。</li>
-<li><strong>static/dynamic 分区评测协议</strong>：用运动掩码把静态/动态区域分开评测深度变化，是检验解耦质量的低成本 proxy，可引入我们的实验设计。</li>
-<li><strong>潜在结合点</strong>：把我们的跨车一致性约束作为附加损失加进 FR3D 式框架（多车 → 统一坐标系下同一 F 的多视角监督），理论上同时改善其横向运动失败与 scale drift 问题。</li>
-</ol>
-<hr />
-<h2 id="9-参考链接">9. 参考链接</h2>
-<ul>
-<li>论文：https://arxiv.org/html/2606.18250v1</li>
-<li>项目主页：https://fr3d-wm.github.io</li>
-<li>Teacher 模型 CUT3R：Wang et al., 2025b（Continuous 3D Perception Model with Persistent State）</li>
-<li>同方向基础：DINO-Foresight（Karypidis et al., 2025a）、DINO-WM（Zhou et al., 2025）、VFMF（Boduljak et al., 2025）</li>
-</ul>
-<div class="back-top"><a href="#">↑ 回到顶部</a></div>
-</main>
+<div class="grid">
+<div class="card">
+<span class="tag green">方向 01 · Decoupling</span>
+<h2>自动驾驶世界模型 · 解耦</h2>
+<p>关注 ego-motion / world-motion、场景动力学 / 观测过程的分离，以及多视角、一致性与结构化世界表征。</p>
+<p class="meta">已收录：FR3D</p>
+<a class="green-btn" href="decoupling/index.html">进入方向 →</a>
 </div>
-<footer>FR3D Paper Reading Notes · 更新于 2026-09-15 · 由 LiMin xue 整理</footer>
-</body>
-</html>
+<div class="card">
+<span class="tag purple">方向 02 · Stateful VWM</span>
+<h2>世界模型 · 不可观测状态追踪</h2>
+<p>关注遮挡与部分可观测条件下，世界模型是否真的维护了“当前世界状态”，以及 persistent / revisable state 的架构机制。</p>
+<p class="meta">已收录：Can Video World Models Track Unobserved World States?</p>
+<a class="purple-btn" href="unobserved-state/index.html">进入方向 →</a>
+</div>
+</div>
+</div>
+<footer>Maintained by @LOIIIIIII · 2026</footer>
+</body></html>
