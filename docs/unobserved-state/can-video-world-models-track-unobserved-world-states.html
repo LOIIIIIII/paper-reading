@@ -20,6 +20,7 @@ table{border-collapse:collapse;width:100%;font-size:14.5px;margin:1.2em 0}th{bac
 .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0}.node{padding:10px 13px;border-radius:10px;background:var(--al);color:#3730a3;font-weight:700}.arrow{color:#9ca3af;font-weight:700}
 .stats{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0}.stat{flex:1 1 180px;padding:18px;border:1px solid #dddafe;border-radius:12px;text-align:center;background:#fafaff}.stat b{display:block;font-size:26px;color:var(--a)}
 .callout{padding:18px 20px;border:1px solid #dddafe;border-radius:12px;background:linear-gradient(180deg,#f8f7ff,#fff);margin:18px 0}
+figure{margin:26px auto;max-width:100%;padding:16px;background:#fafaff;border:1px solid var(--b);border-radius:12px}figure img{display:block;width:100%;height:auto;border-radius:7px}figcaption{margin-top:12px;color:var(--m);font-size:13px;line-height:1.65}figcaption a{color:var(--a);text-decoration:none}
 footer{text-align:center;color:var(--m);font-size:13px;padding:26px 0 40px}
 @media(max-width:900px){.wrap{flex-direction:column}nav{position:static;width:100%;max-height:none;flex:none}main{padding:25px 20px 40px}}
 </style></head>
@@ -53,6 +54,10 @@ footer{text-align:center;color:var(--m);font-size:13px;padding:26px 0 40px}
 <p>但真正需要维护的是不可见状态：</p>
 <div class="eq">s₀  --a₁→  s₁  --a₂→  s₂  --...→  sN</div>
 <p>其中 s_t 表示“球当前在哪个杯子下面”。训练时只见 5 次 swap，测试会延长到 10、20、30 次。</p>
+<figure>
+<img src="images/fig2-shell-game.png" alt="Shell Game 的 reveal、隐藏交换与最终 reveal 流程">
+<figcaption><strong>论文 Figure 2 · Visual Shell Game。</strong>先揭示球的位置，再让球在连续交换中保持不可见，最后重新揭示。图像来源：<a href="https://arxiv.org/html/2608.30692#S3.F2">原论文</a>（CC BY-NC-SA 4.0）。</figcaption>
+</figure>
 
 <h2 id="s3">3. S₃ 和 S₅ 是什么？</h2>
 <p>S₃ / S₅ 是对称群：分别表示 3 个元素、5 个元素的所有排列。S₅ 有 5! = 120 种排列。一次杯子交换就是一次 transposition；一串 swap 的本质，就是不断组合这些排列。</p>
@@ -97,8 +102,20 @@ footer{text-align:center;color:var(--m);font-size:13px;padding:26px 0 40px}
 
 <h3>Figure 4：视觉质量与隐藏状态准确率脱钩</h3>
 <p>图 4A：在 5 次交换上训练后，标准骨干延长到 30 次交换多趋近随机；LaCT8 保持更强外推。图 4B：在 10 次交换测试中，把去噪步数从 4 增至 50 并不提高状态准确率。图 4C：即使隐藏球位置接近随机，PSNR 仍可很高——“视频画得像”不能替代 hidden-state 指标。</p>
+<figure>
+<img src="images/fig4-state-vs-fidelity.svg" alt="Figure 4：状态跟踪长度泛化、去噪步数和视觉保真度的关系">
+<figcaption><strong>论文 Figure 4 · State tracking ≠ visual fidelity。</strong>更高的去噪预算并未修复隐藏状态错误；外观合理的生成视频仍可能把球放错杯子。图像来源：<a href="https://arxiv.org/html/2608.30692#S4.F4">原论文</a>（CC BY-NC-SA 4.0）。</figcaption>
+</figure>
 <h3>Figure 5：看得到历史，不等于维护了当前状态</h3>
 <p>图 5A：增大滑动注意力窗口使 DiT 在训练长度内看全交换历史并拟合，但到 10 次交换仍失败。图 5B：固定探针读取 carried state 时，LaCT8 与 GDN-neg 的隐藏球位置更容易被解码；当前 readout 对可见交换动作的解码很强，却几乎不含隐藏球信息。论文在 5 / 10 次交换上报告 LaCT8 为 0.87 / 0.78，GDN-neg 为 0.70 / 0.46（16 个固定探针）。</p>
+<figure>
+<img src="images/fig5-cache-probe.svg" alt="Figure 5：注意力窗口消融与隐藏状态可解码性">
+<figcaption><strong>论文 Figure 5 · Cache probe。</strong>扩大注意力窗口只帮助模型覆盖训练期历史，不能替代可持续、可改写的当前状态；LaCT8 和 GDN-neg 的 carried state 最可被解码。图像来源：<a href="https://arxiv.org/html/2608.30692#S4.F5">原论文</a>（CC BY-NC-SA 4.0）。</figcaption>
+</figure>
+<figure>
+<img src="images/fig-a2-rollout.png" alt="Shell Game 训练长度两倍时的模型 rollout 对比">
+<figcaption><strong>论文 Figure A2 · Twice-training-length rollout。</strong>长度从训练时的 5 次交换扩展到 10 次后，普通骨干仍能生成表面连贯的视频，但最终 reveal 可能错误；这是理解“视觉逼真不等于状态正确”的直观例子。图像来源：<a href="https://arxiv.org/html/2608.30692#A8.F2">原论文</a>（CC BY-NC-SA 4.0）。</figcaption>
+</figure>
 <p>图号和结论均对应<a href="https://arxiv.org/html/2608.30692">论文原文</a>；这里的多车监督与驾驶遮挡延伸是我们的研究推论，不是该论文直接验证的结论。</p>
 <h2 id="s9">9. 它和真实遮挡是什么关系？</h2>
 <p>Shell Game 不是自动驾驶遮挡本身，而是一个受控诊断实验：把“状态不可见但仍持续演化”抽象到最简单。</p>
