@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>不可观测状态追踪｜Paper Reading</title>
+<style>
+:root{--a:#4f46e5;--al:#eef2ff;--t:#252735;--m:#6b7280;--b:#e5e7eb;--bg:#f7f8fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.8}
+header{padding:56px 20px 44px;text-align:center;color:white;background:linear-gradient(135deg,#25235d,#4f46e5 62%,#7c3aed)}
+header h1{margin:0 0 12px;font-size:32px}.wrap{max-width:980px;margin:34px auto;padding:0 18px}.back{font-size:14px;margin-bottom:18px}.back a{color:var(--a);text-decoration:none}
+.intro,.card{background:#fff;border:1px solid var(--b);border-radius:16px;padding:26px 28px;margin:18px 0;box-shadow:0 8px 30px rgba(0,0,0,.035)}
+.intro strong{color:var(--a)}.tag{display:inline-block;background:var(--al);color:var(--a);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}.card h2{margin:12px 0 8px;font-size:23px}.card p{color:var(--m)}
+.card a{display:inline-block;margin-top:8px;color:white;background:var(--a);text-decoration:none;padding:9px 16px;border-radius:9px;font-weight:700}
+footer{text-align:center;color:var(--m);font-size:13px;padding:20px 0 40px}</style></head>
+<body><header><h1>世界模型 · 不可观测状态追踪</h1><p>Unobserved State Tracking · Persistent / Revisable State · Occlusion & Partial Observability</p></header>
+<div class="wrap"><div class="back"><a href="../index.html">← 返回研究方向首页</a></div>
+<div class="intro"><strong>核心问题：</strong>视频世界模型在画面看不到某个状态时，能否仍在内部持续保存并正确更新它？这里关注的不是“视频是否逼真”，而是“隐藏世界状态是否真的正确”。</div>
+<div class="card"><span class="tag">Stateful Video World Model · 2026</span><h2>Can Video World Models Track Unobserved World States?</h2>
+<p>用符号 S₃/S₅ 与视频 Shell Game 把“视觉生成”与“隐藏状态追踪”拆开，分析 Transformer KV cache、线性注意力、GDN-neg 与 LaCT 的状态能力。</p>
+<a href="can-video-world-models-track-unobserved-world-states.html">阅读完整笔记 →</a></div></div>
+<footer>Paper Reading · Unobserved State Tracking Direction · 2026</footer></body></html>

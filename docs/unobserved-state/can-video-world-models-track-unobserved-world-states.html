@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Can Video World Models Track Unobserved World States? · 论文阅读笔记</title>
+<style>
+:root{--a:#4f46e5;--al:#eef2ff;--t:#272938;--m:#6b7280;--b:#e5e7eb;--bg:#f7f8fb;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.85;font-size:16px}
+header{background:linear-gradient(135deg,#22204e,#4f46e5 62%,#7c3aed);color:white;padding:46px 20px 38px;text-align:center}
+header h1{font-size:30px;margin:0 0 9px}header p{margin:4px 0;opacity:.92}header a{color:#fde68a;text-decoration:none}
+.topbar{max-width:1180px;margin:14px auto 0;padding:0 16px;font-size:13px}.topbar a{color:var(--a);text-decoration:none}
+.wrap{display:flex;max-width:1180px;margin:28px auto;gap:24px;padding:0 16px;align-items:flex-start}
+nav{flex:0 0 270px;position:sticky;top:20px;background:white;border:1px solid var(--b);border-radius:12px;padding:18px 20px;max-height:calc(100vh - 60px);overflow:auto}
+nav strong{color:var(--a)}nav ul{list-style:none;padding:0;margin:10px 0 0}nav li{margin:4px 0}nav a{display:block;padding:3px 7px;color:var(--t);text-decoration:none;font-size:13.5px;border-radius:6px}nav a:hover{background:var(--al);color:var(--a)}
+main{flex:1;min-width:0;background:white;border:1px solid var(--b);border-radius:12px;padding:40px 48px 56px}
+h2{color:var(--a);font-size:22px;margin-top:2.15em;padding-bottom:8px;border-bottom:2px solid var(--al)}h3{font-size:18px;margin-top:1.7em}
+blockquote{margin:1.2em 0;padding:14px 20px;background:var(--al);border-left:4px solid var(--a);border-radius:0 8px 8px 0;color:#3730a3}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:1.2em 0}th{background:var(--al);color:#3730a3}th,td{border:1px solid var(--b);padding:9px 12px;text-align:left;vertical-align:top}
+.eq{background:#fafaff;border:1px solid #e4e2ff;border-radius:10px;padding:14px 18px;margin:16px 0;font-family:"SF Mono",Menlo,monospace;overflow:auto}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0}.node{padding:10px 13px;border-radius:10px;background:var(--al);color:#3730a3;font-weight:700}.arrow{color:#9ca3af;font-weight:700}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0}.stat{flex:1 1 180px;padding:18px;border:1px solid #dddafe;border-radius:12px;text-align:center;background:#fafaff}.stat b{display:block;font-size:26px;color:var(--a)}
+.callout{padding:18px 20px;border:1px solid #dddafe;border-radius:12px;background:linear-gradient(180deg,#f8f7ff,#fff);margin:18px 0}
+footer{text-align:center;color:var(--m);font-size:13px;padding:26px 0 40px}
+@media(max-width:900px){.wrap{flex-direction:column}nav{position:static;width:100%;max-height:none;flex:none}main{padding:25px 20px 40px}}
+</style></head>
+<body>
+<header>
+<h1>Can Video World Models Track Unobserved World States?</h1>
+<p>视频世界模型能否追踪不可观测的世界状态？</p>
+<p>Joonghyuk Shin · Yicong Hong · Jaesik Park · Xun Huang · arXiv:2608.30692 · 2026</p>
+<p><a href="https://arxiv.org/abs/2608.30692">论文</a> · <a href="https://joonghyuk.com/stateful-vwm-web/">项目主页</a></p>
+</header>
+<div class="topbar"><a href="index.html">← 返回“不可观测状态追踪”方向</a> · <a href="../index.html">研究方向首页</a></div>
+<div class="wrap">
+<nav><strong>📑 目录</strong><ul>
+<li><a href="#s0">0. 一句话结论</a></li><li><a href="#s1">1. 论文到底研究什么</a></li><li><a href="#s2">2. Shell Game 输入输出</a></li>
+<li><a href="#s3">3. 为什么是 S₃ / S₅</a></li><li><a href="#s4">4. 为什么标准骨干失败</a></li><li><a href="#s5">5. KV cache 到底缺什么</a></li>
+<li><a href="#s6">6. GDN-neg</a></li><li><a href="#s7">7. LaCT / TTT fast weights</a></li><li><a href="#s8">8. 实验结论</a></li>
+<li><a href="#s9">9. 与遮挡的关系</a></li><li><a href="#s10">10. 对我们课题的启发</a></li><li><a href="#s11">11. 局限性</a></li>
+</ul></nav>
+<main>
+<h2 id="s0">0. 一句话结论</h2>
+<blockquote><strong>会生成逼真视频，不代表模型真的知道“世界现在是什么状态”。</strong>真正能做长时 hidden-state tracking 的架构，需要一个能跨视频块持续携带、并且可以被原地改写的内部状态。</blockquote>
+
+<h2 id="s1">1. 论文到底研究什么？</h2>
+<p>作者提出的问题不是“视频清不清楚”，而是：当一个关键状态在画面里消失以后，视频世界模型是否仍能在内部正确维护它，并随着动作继续更新。</p>
+<div class="flow"><span class="node">可见状态</span><span class="arrow">→</span><span class="node">连续不可见</span><span class="arrow">→</span><span class="node">状态仍然变化</span><span class="arrow">→</span><span class="node">重新揭示</span></div>
+<p>论文用最干净的实验把“视觉渲染”和“状态追踪”拆开：画面里只需要生成杯子的移动，但模型内部必须一直知道球在哪。</p>
+
+<h2 id="s2">2. Shell Game：输入和输出是什么？</h2>
+<p>这是一个真正的<strong>动作条件视频生成任务</strong>。模型先看到 opening reveal，明确球初始在哪个杯子下；之后杯子落下，球完全不可见；输入动作序列指定每一轮交换哪两个杯子；模型自回归生成所有交换视频以及最后的 reveal。</p>
+<div class="eq">(初始 reveal 视频 V₀, 动作序列 a₁:N)  →  未来视频 V̂₁:N+1</div>
+<p>但真正需要维护的是不可见状态：</p>
+<div class="eq">s₀  --a₁→  s₁  --a₂→  s₂  --...→  sN</div>
+<p>其中 s_t 表示“球当前在哪个杯子下面”。训练时只见 5 次 swap，测试会延长到 10、20、30 次。</p>
+
+<h2 id="s3">3. S₃ 和 S₅ 是什么？</h2>
+<p>S₃ / S₅ 是对称群：分别表示 3 个元素、5 个元素的所有排列。S₅ 有 5! = 120 种排列。一次杯子交换就是一次 transposition；一串 swap 的本质，就是不断组合这些排列。</p>
+<p>作者先在纯符号序列上做 S₃ / S₅ state-tracking probe，再把同一个问题视觉化成 5 杯 Shell Game。S₅ 的意义在于它对应更强的、顺序敏感的非交换状态组合问题。</p>
+
+<h2 id="s4">4. 为什么标准 Transformer / Mamba / 线性注意力会失败？</h2>
+<p>训练长度 N=5 时，大多数模型都能拟合到很高准确率；但链长变成 10、20、30 后，状态准确率迅速掉到接近随机。与此同时，生成视频仍然很合理。</p>
+<div class="callout"><strong>论文的判断：</strong>这些模型学到的是“短链怎么从整段历史直接映射到答案”的捷径，而不是可重复执行的单步状态更新规则。</div>
+<div class="eq">捷径： [a₁, a₂, ..., a₅] → s₅<br><br>真正算法： s_{t+1} = F(s_t, a_t)</div>
+<p>因此“视频质量”与“隐藏状态正确率”可以完全分离。</p>
+
+<div class="callout"><strong>固定深度 Transformer / TC⁰ / NC¹ 的直觉：</strong>固定层数的模型可并行处理整段输入，但每增加一次互不交换的置换，正确答案都依赖此前状态。论文指出：在标准对数精度等假设下，一些固定深度骨干属于常数深度电路类 TC⁰；S₅ 的长链组合问题则是 NC¹-完全。若 TC⁰ ≠ NC¹，不能期望这种固定并行深度对任意长链稳定求解。这是特定计算模型下的理论动机，不等于“所有 Transformer 永远无法追踪状态”；外显 scratchpad 或足够表达力的递归更新会改变计算路径。<a href="https://arxiv.org/html/2608.30692#S1">见论文第 1 节</a>。</div>
+<h2 id="s5">5. KV cache 到底缺什么？</h2>
+<p>作者发现，Transformer 的自回归 KV cache 更像<strong>追加式视觉历史</strong>，而不是一个紧凑、可改写的 running state。</p>
+<table><tr><th>KV cache</th><th>理想 running state</th></tr>
+<tr><td>记录“过去发生过什么”</td><td>直接表示“现在是什么”</td></tr>
+<tr><td>append-only，旧 KV 写入后不改</td><td>每来一个动作都原地更新状态</td></tr>
+<tr><td>最后需要重新从历史推导当前排列</td><td>直接读取当前状态即可</td></tr></table>
+<p>扩大 SWA 窗口能让模型在训练长度内看到全部交换历史，但不能解决长链外推，因为核心问题不是“看不到历史”，而是“没有把历史压成一个持续更新的当前状态”。</p>
+
+<h2 id="s6">6. 成功机制一：GDN-neg</h2>
+<p>DeltaNet 风格模型本来就有矩阵状态 S_t，并进行递归更新。问题不是“没状态”，而是标准转移常限制为非负特征值，难以表示 swap 所需的带符号、类似反射的操作。</p>
+<div class="eq">A_t = I - β_t k_t k_tᵀ</div>
+<p>当 β 的范围允许产生负特征值后，可以实现类似 Householder reflection 的状态变换；而交换两个坐标本身就可以写成一种反射。因此：</p>
+<div class="callout"><strong>GDN-neg 的本质：</strong>已有 persistent state，但把“状态更新算子”的表达能力增强到足以真正重排当前状态。</div>
+
+<h2 id="s7">7. 成功机制二：LaCT / TTT fast weights</h2>
+<p>LaCT 的关键是把一个小型 SwiGLU MLP 的参数 W_t 当作工作记忆，并在测试过程跨 chunk 在线更新：</p>
+<div class="eq">f_W(x) = W₁ [ silu(W₀x) ⊙ (W₂x) ]<br><br>W_t → W_{t+1}</div>
+<p>这确实是在“改模型”，但改的是专门设计的 <strong>fast weights</strong>，不是永久重训整个大模型。这些 fast weights 就承担 hidden state 的角色。</p>
+<p>尤其重要的是，更新作用于特征图 W₀、W₂，而不仅仅是最后的 readout W₁。这样历史会改变未来“如何读取/写入状态”的方式，使 effective kernel 具有历史依赖，而不是简单不断加关联。</p>
+
+<h2 id="s8">8. 关键实验结论</h2>
+<div class="stats">
+<div class="stat"><b>N=5</b>训练长度<br>标准骨干基本可拟合</div>
+<div class="stat"><b>→30</b>长链外推<br>多数模型趋近随机</div>
+<div class="stat"><b>20%</b>S₅ 五杯随机猜测基线</div>
+<div class="stat"><b>4→50</b>增加去噪步数<br>不修复状态追踪</div>
+</div>
+<p>论文还做了内部 probe：普通自回归模型的当前读出很容易解码“现在交换的是哪两个杯子”，却很难解码“球现在在哪”；LaCT 和 GDN-neg 的 carried state 则保留了更强的隐藏球位置信息。</p>
+<blockquote>最简单理解：普通模型知道“现在画什么动作”，但不一定知道“隐藏世界现在是什么状态”。</blockquote>
+
+<h3>Figure 4：视觉质量与隐藏状态准确率脱钩</h3>
+<p>图 4A：在 5 次交换上训练后，标准骨干延长到 30 次交换多趋近随机；LaCT8 保持更强外推。图 4B：在 10 次交换测试中，把去噪步数从 4 增至 50 并不提高状态准确率。图 4C：即使隐藏球位置接近随机，PSNR 仍可很高——“视频画得像”不能替代 hidden-state 指标。</p>
+<h3>Figure 5：看得到历史，不等于维护了当前状态</h3>
+<p>图 5A：增大滑动注意力窗口使 DiT 在训练长度内看全交换历史并拟合，但到 10 次交换仍失败。图 5B：固定探针读取 carried state 时，LaCT8 与 GDN-neg 的隐藏球位置更容易被解码；当前 readout 对可见交换动作的解码很强，却几乎不含隐藏球信息。论文在 5 / 10 次交换上报告 LaCT8 为 0.87 / 0.78，GDN-neg 为 0.70 / 0.46（16 个固定探针）。</p>
+<p>图号和结论均对应<a href="https://arxiv.org/html/2608.30692">论文原文</a>；这里的多车监督与驾驶遮挡延伸是我们的研究推论，不是该论文直接验证的结论。</p>
+<h2 id="s9">9. 它和真实遮挡是什么关系？</h2>
+<p>Shell Game 不是自动驾驶遮挡本身，而是一个受控诊断实验：把“状态不可见但仍持续演化”抽象到最简单。</p>
+<div class="eq">真实遮挡： visible → occluded → hidden dynamics → visible again</div>
+<p>因此可以迁移的结论是：</p>
+<p><strong>不可观测状态需要 persistent state + expressive/revisable transition。</strong></p>
+<p>不能直接迁移的则是“负特征值/反射”这个具体技巧，因为真实车辆的 dynamics 不是杯子 permutation。</p>
+
+<h2 id="s10">10. 对我们课题的启发</h2>
+<p>这篇论文主要解决“<strong>怎么存、怎么更新 hidden state</strong>”，但没有解决“<strong>这个不可见状态到底有没有被真实监督</strong>”。这恰好和同步多车训练监督形成衔接：</p>
+<table>
+<tr><th>问题层</th><th>本文</th><th>我们的研究可继续做</th></tr>
+<tr><td>状态容器</td><td>persistent / revisable state</td><td>可借鉴 LaCT、recurrent matrix state 等</td></tr>
+<tr><td>状态更新</td><td>强调 expressive transition</td><td>设计适合驾驶 dynamics 的更新机制</td></tr>
+<tr><td>隐藏区间监督</td><td>像素扩散目标不能直接监督隐藏状态</td><td>用同步多车/多视角在训练时提供 ego 看不到区域的真实证据</td></tr>
+<tr><td>测试阶段</td><td>单模型 rollout</td><td>保持单车推理，多车仅作为 privileged training supervision</td></tr>
+</table>
+<div class="callout"><strong>可形成的研究问题：</strong>“How can a single-view driving world model learn the evolution of states it cannot observe?” —— 用同步多视角为单车 world model 的监督空窗期提供真实跨视角证据。</div>
+
+<h2 id="s11">11. 局限性与阅读时不要过度解读的地方</h2>
+<p>第一，Shell Game 是合成任务，不能直接证明所有真实世界视频模型都以同样方式失败。第二，GDN-neg 的 reflection 与 S₅ swap 高度匹配，不等于真实遮挡 dynamics 也应使用负特征值。第三，即使训练阶段有多视角真实监督，测试阶段若 ego 历史对隐藏未来本身信息不足，也不可能确定性知道真实随机行为，因此真实驾驶还需要不确定性或多模态 hidden-state prediction。</p>
+
+<h2>参考</h2>
+<p>Paper: arXiv:2608.30692 · Project: joonghyuk.com/stateful-vwm-web · 2026-08-31</p>
+</main></div>
+<footer>Paper Reading Notes · Unobserved State Tracking · 2026</footer>
+</body></html>

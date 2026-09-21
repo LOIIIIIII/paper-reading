@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""build_site.py — 将 notes/ 下的论文笔记 Markdown 生成为 docs/index.html 阅读网页。
+"""build_site.py — 将 notes/ 下的论文笔记 Markdown 生成为 docs/decoupling/fr3d.html 阅读网页。
 
 用法: python3 tools/build_site.py
 依赖: pip3 install markdown
@@ -12,7 +12,7 @@ import markdown
 
 ROOT = Path(__file__).resolve().parent.parent
 NOTES = ROOT / "notes" / "FR3D_论文阅读笔记.md"
-OUT = ROOT / "docs" / "index.html"
+OUT = ROOT / "docs" / "decoupling" / "fr3d.html"
 UPDATED = "2026-09-15"
 
 STATS_HTML = '''
@@ -29,8 +29,8 @@ def build():
         NOTES.read_text(encoding="utf-8"),
         extensions=["tables", "fenced_code", "sane_lists"],
     )
-    # notes/ 中的相对路径 ../docs/images/ 改写为网页相对路径 images/
-    body = body.replace("../docs/images/", "images/")
+    # notes/ 中的相对路径 ../docs/images/ 改写为网页相对路径 ../images/
+    body = body.replace("../docs/images/", "../images/")
     # “图 + 斜体图注”段落 → 居中 <figure>
     fig_pattern = re.compile(
         r"<p>\s*<img([^>]*?)\s*/>\s*(?:<br\s*/?>\s*)?<em>(.*?)</em>\s*</p>", re.S
@@ -161,6 +161,7 @@ def build():
   <p>主题：自动驾驶世界模型中的「解耦」— Ego-Motion 与 World-Motion 的分离</p>
   <p>📖 论文原文：<a href="https://arxiv.org/html/2606.18250v1" target="_blank">arXiv:2606.18250</a> ｜ 📁 <a href="https://github.com/LOIIIIIII/paper-reading" target="_blank">GitHub 仓库</a></p>
 </header>
+<div style="max-width:1180px;margin:14px auto 0;padding:0 16px;font-size:14px"><a style="color:#1a6d5b;text-decoration:none" href="index.html">← 解耦方向</a> · <a style="color:#1a6d5b;text-decoration:none" href="../index.html">研究方向首页</a></div>
 <div class="wrap">
 {toc}
 <main>
@@ -172,7 +173,7 @@ def build():
 </body>
 </html>"""
 
-    OUT.write_text(page, encoding="utf-8")
+    OUT.write_text(page + "\n", encoding="utf-8")
     n_stats = page.count('class="stat"')
     print(f"OK: {OUT} | figures={page.count('<figure>')} stats={n_stats} imgs={page.count('<img')}")
 
