@@ -2,30 +2,30 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Paper Reading · 世界模型研究笔记</title>
+<title>Paper Reading · 论文与技术研究笔记</title>
 <style>
-:root{--t:#24272f;--m:#6b7280;--b:#e5e7eb;--bg:#f6f7fb;--card:#fff;--g:#1a6d5b;--p:#4f46e5}
+:root{--t:#24272f;--m:#6b7280;--b:#e5e7eb;--bg:#f6f7fb;--card:#fff;--g:#1a6d5b;--p:#4f46e5;--s:#315f8c}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.8}
 header{padding:64px 20px 54px;text-align:center;color:white;background:linear-gradient(135deg,#172554,#334155 46%,#4f46e5)}
 header h1{font-size:36px;margin:0 0 12px}header p{margin:5px 0;opacity:.9}
 .wrap{max-width:1060px;margin:38px auto;padding:0 18px}.lead{background:#fff;border:1px solid var(--b);border-radius:16px;padding:24px 28px;color:#4b5563}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:24px}.card{background:var(--card);border:1px solid var(--b);border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(20,30,60,.04)}
 .card h2{margin:10px 0 8px;font-size:24px}.card p{color:var(--m)}.tag{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
-.green{background:#e6f2ef;color:var(--g)}.purple{background:#eef2ff;color:var(--p)}
+.green{background:#e6f2ef;color:var(--g)}.purple{background:#eef2ff;color:var(--p)}.steel{background:#eaf0f8;color:var(--s)}
 .card a{display:inline-block;margin-top:12px;text-decoration:none;color:#fff;padding:9px 16px;border-radius:9px;font-weight:700}
-.green-btn{background:var(--g)}.purple-btn{background:var(--p)}
+.green-btn{background:var(--g)}.purple-btn{background:var(--p)}.steel-btn{background:var(--s)}
 .meta{font-size:13px;color:var(--m);margin-top:18px}footer{text-align:center;color:var(--m);font-size:13px;padding:28px 0 42px}
 @media(max-width:760px){.grid{grid-template-columns:1fr}header h1{font-size:30px}}
 </style></head>
 <body>
 <header>
-<h1>Paper Reading · 世界模型研究笔记</h1>
-<p>按研究问题组织论文，而不是把所有文章混在一个页面里。</p>
-<p>World Models · State · Dynamics · Partial Observability</p>
+<h1>Paper Reading · 论文与技术研究笔记</h1>
+<p>按研究问题组织论文与技术笔记。</p>
+<p>World Models · State · Dynamics · Partial Observability · LLM Systems</p>
 </header>
 <div class="wrap">
 <div class="lead">
-目前将论文拆为两个研究方向：一个关注<strong>自动驾驶世界模型中的解耦</strong>，另一个关注<strong>不可观测状态追踪</strong>。后续同方向论文继续挂到各自目录下，便于组会横向比较。
+目前整理三个研究方向：<strong>自动驾驶世界模型中的解耦</strong>、<strong>不可观测状态追踪</strong>与<strong>LLM Serving / Inference Systems</strong>。后续同方向论文与技术笔记继续挂到各自目录下，便于组会横向比较。
 </div>
 <div class="grid">
 <div class="card">
@@ -41,6 +41,13 @@ header h1{font-size:36px;margin:0 0 12px}header p{margin:5px 0;opacity:.9}
 <p>关注遮挡与部分可观测条件下，世界模型是否真的维护了“当前世界状态”，以及 persistent / revisable state 的架构机制。</p>
 <p class="meta">已收录：Can Video World Models Track Unobserved World States?</p>
 <a class="purple-btn" href="unobserved-state/index.html">进入方向 →</a>
+</div>
+<div class="card">
+<span class="tag steel">方向 03 · LLM Serving</span>
+<h2>LLM Serving · 从串行推理到 Continuous Batching</h2>
+<p>从单请求推理生命周期出发，分析在线服务中的排队、并发、Batching、Prefill / Decode、KV Cache、ORCA、vLLM，以及 Ollama / Qwen3.5 的并行适配问题。</p>
+<p class="meta">Serving · Scheduling · Memory · Runtime Compatibility</p>
+<a class="steel-btn" href="llm-serving/index.html">阅读完整笔记 →</a>
 </div>
 </div>
 </div>
